@@ -1,10 +1,10 @@
 const { GraphQLID, 
-    GraphQLObjectType,
-    GraphQLBoolean, 
-    GraphQLString,
-    GraphQLInputObjectType,
-    GraphQLList,
-    GraphQLSchema} = require('graphql')
+  GraphQLObjectType,
+  GraphQLBoolean, 
+  GraphQLString,
+  GraphQLInputObjectType,
+  GraphQLList,
+  GraphQLSchema} = require('graphql')
 const resolvers = require('./resolvers')
 
 const User = new GraphQLObjectType({
@@ -72,7 +72,7 @@ User: {
 type: User,
 resolve: resolvers.User,
 args: {
-  id: {type: GraphQLString}
+id: {type: GraphQLString}
 }
 },
 Users: {
@@ -83,14 +83,14 @@ UsersByFilter: {
 type: GraphQLList(User),
 resolve: resolvers.UsersByFilter,
 args: {
-  filter: { type: UserFilterInput }
+filter: { type: UserFilterInput }
 }
 },
 Message: {
 type: Message,
 resolve: resolvers.Message,
 args: {
-  id: {type: GraphQLString}
+id: {type: GraphQLString}
 }
 },
 Messages: {
@@ -101,7 +101,7 @@ MessagesByFilter: {
 type: GraphQLList(Message),
 resolve: resolvers.MessagesByFilter,
 args: {
-  filter: { type: MessageFilterInput }
+filter: { type: MessageFilterInput }
 }
 }
 }

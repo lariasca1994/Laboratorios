@@ -1,4 +1,4 @@
-const request = require('supertest'); // Libreria para probar APIs
+aconst request = require('supertest'); // Libreria para probar APIs
 const app = require('../index.js'); // importando todas las rutas
 
 const objectToTest = {

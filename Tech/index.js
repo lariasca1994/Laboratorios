@@ -2,11 +2,13 @@
 const express = require('express') //Importo la libreria
 const app = express() //Inicializacion de la variable que usara la libreria
 const router = express.Router(); // Enrutar los servicios web
-const port = 3000; // Escuchar la ejecucion del servidor
+const port = 3003; // Escuchar la ejecucion del servidor
 /** Importacion de variables de entorno */
 require('dotenv').config() // Obetenmos las variables de entorno
 /** Web Sockets */
 const socket = require('socket.io') // Importamos la libreria socket.io
+const cors = require('cors')
+app.use(cors());
 const http = require('http').Server(app)
 const io = socket(http)
 

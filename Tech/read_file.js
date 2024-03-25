@@ -26,4 +26,4 @@ router.post('/department', (req, res) => {
     })
 })
 
-module.exports = router
+module.exports = router 
