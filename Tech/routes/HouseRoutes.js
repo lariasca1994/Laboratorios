@@ -1,21 +1,23 @@
 const express = require('express');
 const router = express.Router();
 const HouseSchema = require('../models/House');
-const multer = require('multer');
 
+// Middleware para analizar el cuerpo de las solicitudes como JSON
+router.use(express.json());
 
 router.post('/house', async (req, res) => {
-    //Crear un usuario
-    let house = HouseSchema({
-        state: req.body.state,
-        city: req.body.city,
-    })
+    try {
+        // Crear una nueva casa
+        const house = new HouseSchema({
+            state: req.body.state,
+            city: req.body.city,
+        });
 
-    house.save().then((result) => {
-        res.send(result)
-    }).catch((err) => {        
-            res.send({"status" : "error", "message" :err.message})
-    })
-})
+        const result = await house.save();
+        res.json(result);
+    } catch (err) {
+        res.status(500).json({ status: 'error', message: err.message });
+    }
+});
 
-module.exports = router
+module.exports = router;

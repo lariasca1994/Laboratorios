@@ -3,16 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Mensajes en tiempo real</title>
+    <style>
+        #mensajes {
+            list-style-type: none;
+            padding: 0;
+        }
+        #mensajes li {
+            padding: 5px 10px;
+        }
+        #mensajes li:nth-child(odd) {
+            background-color: #f2f2f2;
+        }
+    </style>
 </head>
 <body>
     <div>
         <h1>Mensajes en tiempo real</h1>
-        <div id="mensajes">
-            <!-- Aqui van a ir los mensajes -->
-        </div>
+        <ul id="mensajes">
+            <!-- Aquí van a ir los mensajes -->
+        </ul>
         <div>
-            <input name="envio-mensajes" id="envio-mensajes" cols="30" rows="10"> <br>
+            <input type="text" name="envio-mensajes" id="envio-mensajes" placeholder="Escribe un mensaje...">
             <button type="button" id="send">Enviar</button>
         </div>
     </div>
@@ -22,62 +34,60 @@
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
 <script>
-
-    $(document).ready(function(){
-        /** Aqui implementamos la parte que escucha */
+    $(document).ready(function() {
+        /** Aquí implementamos la parte que escucha */
         var socket = io('http://localhost:3000', {
             transports: ['websocket']
-        })
+        });
 
-        socket.on('connect', function(socket){
-            console.log("connected")
-        })
+        socket.on('connect', function() {
+            console.log("Conectado al servidor");
+        });
 
-        /* Estoy escuchando el evento desde mi pagina web **/
-        socket.on('message-receipt', function(data){            
-            addMenssages(data)
-        })
+        /* Estoy escuchando el evento desde mi página web */
+        socket.on('message-receipt', function(data) {
+            addMessage(data, false);
+        });
 
-        /** Aqui finaliza la parte que escucha */
+        /** Aquí finaliza la parte que escucha */
 
+        /** Aquí implementamos la parte que envía */
+        $("#send").click(function() {
+            sendMessage(socket);
+        });
 
-        /** Aqui implementamos la parte que envia */
-        $("#send").click(function(){
-            prepareMessage(socket);
-        })
-
-        $("#envio-mensajes").on("keypress", function() {
+        $("#envio-mensajes").on("keypress", function(event) {
             if (event.which === 13) {
-                prepareMessage(socket);
+                sendMessage(socket);
             }
         });
-    })
+    });
 
-    function addMenssages(data, sender = false){
+    function addMessage(data, sender = false) {
         const messageElement = document.createElement('li');
-        messageElement.textContent = data.body
-        if(sender){
+        messageElement.textContent = data.body;
+        if (sender) {
             messageElement.style.color = 'red';
         }
 
-        const messagesDiv = document.getElementById('mensajes')
-        messagesDiv.appendChild(messageElement)
+        const messagesDiv = document.getElementById('mensajes');
+        messagesDiv.appendChild(messageElement);
         $("#envio-mensajes").val("");
     }
 
-    function prepareMessage(socket){
-        content = $("#envio-mensajes").val();
-        console.log(content)
-
-        var payload = {
+    function sendMessage(socket) {
+        const content = $("#envio-mensajes").val().trim();
+        if (content !== "") {
+            const payload = {
                 "body": content,
                 "from": "65ceb797600b0159e555930f",
                 "to": "65cfefe456bf1d4ec68d497e"
-            }
-        var data = JSON.stringify(payload);
-        
-        socket.emit("message", data)
-        addMenssages(payload, true)
+            };
+            const data = JSON.stringify(payload);
+
+            socket.emit("message", data);
+            addMessage(payload, true);
+        }
     }
 </script>
 </html>

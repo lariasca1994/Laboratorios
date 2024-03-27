@@ -3,159 +3,154 @@ const router = express.Router();
 const bcrypt = require('bcrypt');
 const UserSchema = require('../models/User');
 const MessageSchema = require('../models/Message');
-const UserController = require('../controllers/UserController'); //Importando el controllador
+const UserController = require('../controllers/UserController'); //Importando el controlador
 const multer = require('multer');
-const userController = new UserController(); // creando una instancia de ese controlador
+const userController = new UserController(); // creando una instancia del controlador
 
-
+// Middleware para analizar el cuerpo de las solicitudes como JSON
+router.use(express.json());
 
 router.get('/user', async (req, res) => {
-    //Traer todos los usuarios
-    let users = await UserSchema.find(); 
-    res.json(users)
-})
-
-router.get('/user/:id', async (req, res) => {
-    //Traer un usuario especifico pasando el ID
-    var id = req.params.id
-    let user = await UserSchema.findById(id); 
-    res.json(user)
-
-    //Traer un usuario pasandole el email
-    // const query = UserSchema.where({ email: email });
-    // const user = await query.findOne()
-})
-
-router.post('/user', async (req, res) => {
-    //Crear un usuario
-    const hashedPassword = await bcrypt.hash(req.body.password, 10)
-
-    let user = UserSchema({
-        name: req.body.name,
-        lastname: req.body.lastname,
-        email: req.body.email,
-        id: req.body.id,
-        password: hashedPassword
-    })
-
-    user.save().then((result) => {
-        res.send(result)
-    }).catch((err) => {
-        if(err.code == 11000){
-            res.send({"status" : "error", "message" :"El correo ya fue registrado"})      
-        }else{
-            res.send({"status" : "error", "message" :err.message})      
-        }
-    })
-})
-
-
-
-router.patch('/user/:id', userController.validateToken, (req, res) => {
-    //Actualizar un usuario
-    // Cuando viene por la url del servicio web params
-    var id = req.params.id
-    
-    // Cuando viene por el body se usa body
-    var updateUser = {
-        name: req.body.name,
-        lastname: req.body.lastname,
-        email: req.body.email,
-        id: req.body.id
-    }
-
-    UserSchema.findByIdAndUpdate(id, updateUser, {new: true}).then((result) => {
-        res.send(result)
-    }).catch((error) => {
-        console.log(error)
-        res.send("Error actualizando el registro")
-    })
-})
-
-router.delete('/user/:id', userController.validateToken, (req, res) => {
-    
-    var id = req.params.id
-
-    //Puedo establecer cualquier parametro para eliminar
-    UserSchema.deleteOne({_id: id}).then(() => {
-        res.json({"status": "success", "message": "User deleted successfully"})
-    }).catch((error) => {
-        console.log(error)
-        res.json({"status": "failed", "message": "Error deleting user"})
-    })
-
-    //Ejemplo 2
-    // var name = req.params.name
-    // var email = req.params.email
-    // var query;
-    // if(email != null){
-    //     query = {name: name, email: email}
-    // }else{
-    //     query = {name: name}
-    // }
-    // //Puedo establecer cualquier parametro para eliminar
-    //     UserSchema.deleteOne(query).then(() => {
-    //         res.json({"status": "success", "message": "User deleted successfully"})
-    //     }).catch((error) => {
-    //         console.log(error)
-    //         res.json({"status": "failed", "message": "Error deleting user"})
-    //     })
-})
-
-router.post('/login', (req, res) => {
-    const email = req.body.email;
-    const password = req.body.password;
-
-    userController.login(email, password).then((result) => {
-        if(result.status == "error"){
-            res.status(401).send(result)
-        }else{
-            res.send(result)
-        }
-    })
-})
-
-//Configuracion de la libreria multer
-const storage = multer.diskStorage({
-    destination: function(req, file, cb){        
-        cb(null, 'uploads/')
-    },
-    filename: function(req, file, cb){
-        cb(null, Date.now() + '-' + file.originalname)
+    try {
+        //Traer todos los usuarios
+        let users = await UserSchema.find();
+        res.json(users);
+    } catch (error) {
+        res.status(500).json({ status: 'error', message: 'Error al obtener los usuarios' });
     }
 });
 
-const fileFilter = (req, file, cb) => {    
-    if(file.mimetype.startsWith('image/')){
-        cb(null, true)
-    }else{
-        cb(new Error('El archivo no es una imagen'))
+router.get('/user/:id', async (req, res) => {
+    try {
+        //Traer un usuario específico pasando el ID
+        const id = req.params.id;
+        const user = await UserSchema.findById(id);
+        if (!user) {
+            return res.status(404).json({ status: 'error', message: 'Usuario no encontrado' });
+        }
+        res.json(user);
+    } catch (error) {
+        res.status(500).json({ status: 'error', message: 'Error al obtener el usuario' });
     }
-}
+});
 
-const upload = multer({ storage: storage, fileFilter: fileFilter})
+router.post('/user', async (req, res) => {
+    try {
+        //Crear un usuario
+        const hashedPassword = await bcrypt.hash(req.body.password, 10);
+
+        const user = new UserSchema({
+            name: req.body.name,
+            lastname: req.body.lastname,
+            email: req.body.email,
+            id: req.body.id,
+            password: hashedPassword
+        });
+
+        const result = await user.save();
+        res.json(result);
+    } catch (err) {
+        if (err.code === 11000) {
+            res.status(400).json({ status: 'error', message: 'El correo ya fue registrado' });
+        } else {
+            res.status(500).json({ status: 'error', message: err.message });
+        }
+    }
+});
+
+router.patch('/user/:id', userController.validateToken, async (req, res) => {
+    try {
+        //Actualizar un usuario
+        const id = req.params.id;
+        const updateUser = {
+            name: req.body.name,
+            lastname: req.body.lastname,
+            email: req.body.email,
+            id: req.body.id
+        };
+
+        const result = await UserSchema.findByIdAndUpdate(id, updateUser, { new: true });
+        if (!result) {
+            return res.status(404).json({ status: 'error', message: 'Usuario no encontrado' });
+        }
+        res.json(result);
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ status: 'error', message: 'Error al actualizar el usuario' });
+    }
+});
+
+router.delete('/user/:id', userController.validateToken, async (req, res) => {
+    try {
+        const id = req.params.id;
+        const result = await UserSchema.deleteOne({ _id: id });
+        if (result.deletedCount === 0) {
+            return res.status(404).json({ status: 'error', message: 'Usuario no encontrado' });
+        }
+        res.json({ status: 'success', message: 'Usuario eliminado exitosamente' });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ status: 'error', message: 'Error al eliminar el usuario' });
+    }
+});
+
+router.post('/login', async (req, res) => {
+    const email = req.body.email;
+    const password = req.body.password;
+
+    try {
+        const result = await userController.login(email, password);
+        if (result.status === 'error') {
+            res.status(401).json(result);
+        } else {
+            res.json(result);
+        }
+    } catch (error) {
+        res.status(500).json({ status: 'error', message: 'Error al iniciar sesión' });
+    }
+});
+
+//Configuración de la librería multer
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, 'uploads/');
+    },
+    filename: function (req, file, cb) {
+        cb(null, Date.now() + '-' + file.originalname);
+    }
+});
+
+const fileFilter = (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+        cb(null, true);
+    } else {
+        cb(new Error('El archivo no es una imagen'));
+    }
+};
+
+const upload = multer({ storage: storage, fileFilter: fileFilter });
 
 // Servicio web para el almacenamiento de archivos
-router.post('/upload/:id/user', upload.single('file'), (req, res) => {
-    if(!req.file){
-        return res.status(400).send({ 'status': 'error', 'message': 'No se proporciono ningun archivo'})
+router.post('/upload/:id/user', upload.single('file'), async (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ status: 'error', message: 'No se proporcionó ningún archivo' });
     }
 
-    var id = req.params.id
+    try {
+        const id = req.params.id;
+        const updateUser = {
+            avatar: req.file.path
+        };
 
-    var updateUser = {
-        avatar: req.file.path
+        const result = await UserSchema.findByIdAndUpdate(id, updateUser, { new: true });
+        if (!result) {
+            return res.status(404).json({ status: 'error', message: 'Usuario no encontrado' });
+        }
+        res.json({ status: 'success', message: 'Archivo subido correctamente' });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ status: 'error', message: 'Error al actualizar el registro' });
     }
+});
 
-    console.log(id)
-
-    UserSchema.findByIdAndUpdate(id, updateUser, {new: true}).then((result) => {
-        res.send({"status": "success", "message": "Archivo subido correctamente"})
-    }).catch((error) => {
-        console.log(error)
-        res.send({"status": "success", "message" : "Error actualizando el registro"})
-    })
-
-})
-
-module.exports = router
+module.exports = router;    

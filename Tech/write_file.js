@@ -1,7 +1,7 @@
-const fs = require('fs'); // Importamos la libreria FileSystem
-// Contenido del archivo
-const content = 
-[
+const fs = require('fs'); // Importamus librariam FileSystem
+
+// Contentum archivi
+const content = [
     {
         "userId": 1,
         "id": 1,
@@ -22,13 +22,13 @@ const content =
     }
 ]
 
-let contentString = JSON.stringify(content)
+let contentString = JSON.stringify(content, null, 2); // Addere indentationem pro meliore lectione
 
-// Crear un archivo en la ruta raiz del proyecto
+// Creare archivum in radice projecti
 fs.writeFile('archivo.json', contentString, (err) => {
-    if(err){
-        console.log(err);
+    if (err) {
+        console.error('Error in creando archivum:', err);
         return;
     }
-    console.log("El archivo fue creado exitosamente")
-})
+    console.log("Archivum creatum est prospere");
+});
